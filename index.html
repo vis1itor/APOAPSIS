@@ -57,7 +57,7 @@
             pointer-events: none;
         }
 
-        /* ===== БОКОВАЯ ПАНЕЛЬ (СПИСОК ЧАТОВ) ===== */
+        /* ===== БОКОВАЯ ПАНЕЛЬ ===== */
         .sidebar {
             width: 300px;
             min-width: 300px;
@@ -227,7 +227,7 @@
             flex-shrink: 0;
         }
 
-        /* ===== ОСНОВНАЯ ОБЛАСТЬ (ЧАТ) ===== */
+        /* ===== ОСНОВНАЯ ОБЛАСТЬ ===== */
         .main-chat {
             flex: 1;
             display: flex;
@@ -753,11 +753,12 @@
 
     <script>
         // ============================================================
-        // 1. КОНФИГ FIREBASE
+        // 1. КОНФИГ FIREBASE (ТВОЙ)
         // ============================================================
         var firebaseConfig = {
             apiKey: "AIzaSyCUsMTVo7kIgPdafanIhIHSnz8vyApJODo",
             authDomain: "nebula-93d4f.firebaseapp.com",
+            databaseURL: "https://nebula-93d4f-default-rtdb.europe-west1.firebasedatabase.app",
             projectId: "nebula-93d4f",
             storageBucket: "nebula-93d4f.firebasestorage.app",
             messagingSenderId: "322363940406",
@@ -911,7 +912,6 @@
                 online: true
             }).catch(function() {});
 
-            // При закрытии вкладки — убираем онлайн
             window.addEventListener('beforeunload', function() {
                 db.collection('online').doc(currentUser).set({
                     online: false,
@@ -920,26 +920,18 @@
             });
         }
 
-        function isUserOnline(uid) {
-            // Проверяем в реальном времени через listener
-            // Пока просто возвращаем true для теста
-            return true;
-        }
-
         // ============================================================
         // 6. ЗАГРУЗКА ЧАТОВ
         // ============================================================
         function loadChats() {
             if (!currentUser) return;
 
-            // Загружаем пользователей
             db.collection('users').get()
                 .then(function(snapshot) {
                     allUsers = {};
                     snapshot.forEach(function(doc) {
                         allUsers[doc.id] = doc.data();
                     });
-                    // Загружаем чаты
                     return db.collection('chats')
                         .where('participants', 'array-contains', currentUser)
                         .get();
@@ -951,7 +943,6 @@
                         data.id = doc.id;
                         allChats.push(data);
                     });
-                    // Сортируем по последнему сообщению
                     allChats.sort(function(a, b) {
                         var aTime = a.lastMessageTime || a.createdAt || 0;
                         var bTime = b.lastMessageTime || b.createdAt || 0;
@@ -960,7 +951,6 @@
                         return 0;
                     });
                     renderChats();
-                    // Если есть активный чат — загружаем сообщения
                     if (currentChatId) {
                         loadMessages(currentChatId);
                     }
@@ -1038,8 +1028,6 @@
 
             renderChats();
             loadMessages(chatId);
-
-            // Помечаем сообщения как прочитанные
             markAsRead(chatId);
         }
 
@@ -1055,7 +1043,6 @@
                         var data = doc.data();
                         var messages = data.messages || [];
                         renderMessages(messages);
-                        // Помечаем как прочитанные
                         markAsRead(chatId);
                     }
                 }, function(error) {
@@ -1106,7 +1093,6 @@
                         time: new Date().toISOString()
                     });
 
-                    // Обновляем непрочитанные для собеседника
                     var unread = data.unread || {};
                     var partnerId = data.participants.find(function(p) { return p !== currentUser; });
                     if (partnerId) {
@@ -1123,7 +1109,6 @@
                 .then(function() {
                     input.value = '';
                     notify('💬 сообщение отправлено');
-                    // Обновляем список чатов
                     loadChats();
                 })
                 .catch(function(error) {
@@ -1158,7 +1143,6 @@
             var partnerEmail = prompt('Введите email пользователя:');
             if (!partnerEmail) return;
 
-            // Ищем пользователя по email
             db.collection('users').where('email', '==', partnerEmail).get()
                 .then(function(snapshot) {
                     if (snapshot.empty) {
@@ -1175,7 +1159,6 @@
 
                     var chatId = getChatId(currentUser, partnerId);
 
-                    // Проверяем, существует ли уже чат
                     return db.collection('chats').doc(chatId).get()
                         .then(function(doc) {
                             if (doc.exists) {
@@ -1183,7 +1166,6 @@
                                 openChat(chatId, partnerId);
                                 return;
                             }
-                            // Создаём новый чат
                             return db.collection('chats').doc(chatId).set({
                                 participants: [currentUser, partnerId],
                                 createdAt: new Date().toISOString(),
@@ -1195,10 +1177,13 @@
                         });
                 })
                 .then(function() {
-                    notify('✅ чат создан');
-                    loadChats();
+                    if (currentChatId) {
+                        notify('✅ чат создан');
+                        loadChats();
+                    }
                 })
                 .catch(function(error) {
+                    console.error('Ошибка создания чата:', error);
                     notify('❌ ошибка: ' + error.message);
                 });
         }
@@ -1238,12 +1223,11 @@
             }
         });
 
-        // Обновляем онлайн-статус каждые 30 секунд
         setInterval(function() {
             if (currentUser) {
                 updateOnlineStatus();
             }
-        }, 30000); 
+        }, 30000);
     </script>
 </body>
-</html>            
+</html>
