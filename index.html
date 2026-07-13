@@ -57,7 +57,6 @@
             pointer-events: none;
         }
 
-        /* ===== БОКОВАЯ ПАНЕЛЬ ===== */
         .sidebar {
             width: 300px;
             min-width: 300px;
@@ -219,15 +218,6 @@
             flex-shrink: 0;
         }
 
-        .chat-item .online-dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background: #4caf50;
-            flex-shrink: 0;
-        }
-
-        /* ===== ОСНОВНАЯ ОБЛАСТЬ ===== */
         .main-chat {
             flex: 1;
             display: flex;
@@ -436,7 +426,6 @@
             color: #E0F4FF;
         }
 
-        /* ===== АВТОРИЗАЦИЯ ===== */
         .auth-container {
             max-width: 420px;
             width: 100%;
@@ -688,6 +677,7 @@
     </style>
 </head>
 <body>
+
     <!-- ===== АВТОРИЗАЦИЯ ===== -->
     <div id="authContainer" class="auth-container">
         <div class="logo">APOAPSIS</div>
@@ -753,7 +743,7 @@
 
     <script>
         // ============================================================
-        // 1. КОНФИГ FIREBASE (ТВОЙ)
+        // 1. КОНФИГ FIREBASE
         // ============================================================
         var firebaseConfig = {
             apiKey: "AIzaSyCUsMTVo7kIgPdafanIhIHSnz8vyApJODo",
@@ -853,6 +843,14 @@
             }
 
             auth.createUserWithEmailAndPassword(email, pass)
+                .then(function(userCredential) {
+                    var user = userCredential.user;
+                    // ===== СОЗДАЁМ ДОКУМЕНТ ПОЛЬЗОВАТЕЛЯ =====
+                    return db.collection('users').doc(user.uid).set({
+                        email: email,
+                        createdAt: new Date().toISOString()
+                    });
+                })
                 .then(function() {
                     msg.innerText = '✅ регистрация успешна! войди.';
                     msg.className = 'message success';
@@ -1146,7 +1144,7 @@
             db.collection('users').where('email', '==', partnerEmail).get()
                 .then(function(snapshot) {
                     if (snapshot.empty) {
-                        notify('❌ пользователь не найден');
+                        notify('❌ пользователь с таким email не найден');
                         return;
                     }
                     var userDoc = snapshot.docs[0];
