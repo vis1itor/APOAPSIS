@@ -1,624 +1,549 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Apoapsis</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>APOAPSIS · Telegram style</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&display=swap" rel="stylesheet" />
+  <script type="importmap">
+    {
+      "imports": {
+        "firebase/app": "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js",
+        "firebase/database": "https://www.gstatic.com/firebasejs/11.0.0/firebase-database.js",
+        "firebase/auth": "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js"
+      }
+    }
+  </script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
 
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js">
-    </script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js">
-    </script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js">
-    </script>
+    body {
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: #0f0f0f;
+      font-family: 'Dela Gothic One', cursive, sans-serif;
+      padding: 12px;
+      margin: 0;
+    }
 
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        body {
-            font-family: Arial, sans-serif;
-            background: #0a0a1a;
-            color: #fff;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            padding: 20px;
-        }
-        .container {
-            max-width: 500px;
-            width: 100%;
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 16px;
-            padding: 24px;
-            border: 1px solid rgba(255, 255, 255, 0.05);
-        }
-        h1 {
-            text-align: center;
-            font-size: 2em;
-            background: linear-gradient(145deg, #E0F4FF, #00D4FF);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-        .sub {
-            text-align: center;
-            color: rgba(255, 255, 255, 0.2);
-            font-size: 0.8em;
-            margin-bottom: 20px;
-        }
-        input,
-        textarea {
-            width: 100%;
-            padding: 10px 14px;
-            margin: 6px 0 10px 0;
-            border: none;
-            border-radius: 10px;
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            color: #fff;
-            font-size: 1em;
-            outline: none;
-        }
-        input:focus,
-        textarea:focus {
-            border-color: rgba(0, 180, 255, 0.2);
-        }
-        button {
-            width: 100%;
-            padding: 10px;
-            margin: 6px 0;
-            border: none;
-            border-radius: 10px;
-            font-weight: 700;
-            font-size: 1em;
-            cursor: pointer;
-            transition: 0.2s;
-        }
-        .btn-cyan {
-            background: linear-gradient(145deg, #00D4FF, #0099CC);
-            color: #05050f;
-        }
-        .btn-cyan:hover {
-            transform: scale(1.01);
-        }
-        .btn-ghost {
-            background: rgba(255, 255, 255, 0.05);
-            color: rgba(255, 255, 255, 0.5);
-            border: 1px solid rgba(255, 255, 255, 0.05);
-        }
-        .btn-ghost:hover {
-            background: rgba(255, 255, 255, 0.08);
-            color: #fff;
-        }
-        .btn-danger {
-            background: rgba(255, 50, 50, 0.08);
-            color: #ff5555;
-            border: 1px solid rgba(255, 50, 50, 0.05);
-        }
-        .btn-danger:hover {
-            background: rgba(255, 50, 50, 0.15);
-        }
-        .btn-small {
-            padding: 6px 12px;
-            width: auto;
-            font-size: 0.8em;
-            display: inline-block;
-            margin: 2px;
-        }
-        .message {
-            text-align: center;
-            margin: 8px 0;
-            font-size: 0.85em;
-        }
-        .message.success {
-            color: #66ddbb;
-        }
-        .message.error {
-            color: #ff5555;
-        }
-        .hidden {
-            display: none !important;
-        }
-        .chat-item {
-            background: rgba(255, 255, 255, 0.03);
-            padding: 10px 14px;
-            border-radius: 10px;
-            margin: 4px 0;
-            cursor: pointer;
-            border: 1px solid rgba(255, 255, 255, 0.02);
-            transition: 0.2s;
-        }
-        .chat-item:hover {
-            background: rgba(255, 255, 255, 0.06);
-        }
-        .chat-item.active {
-            border-color: rgba(0, 180, 255, 0.2);
-            background: rgba(0, 180, 255, 0.05);
-        }
-        .chat-item .name {
-            font-weight: 600;
-        }
-        .chat-item .last {
-            font-size: 0.8em;
-            color: rgba(255, 255, 255, 0.2);
-        }
-        .chat-messages {
-            max-height: 300px;
-            overflow-y: auto;
-            padding: 10px;
-            background: rgba(0, 0, 0, 0.15);
-            border-radius: 10px;
-            margin: 8px 0;
-        }
-        .msg {
-            padding: 8px 12px;
-            margin: 4px 0;
-            border-radius: 10px;
-            max-width: 80%;
-        }
-        .msg.sent {
-            background: rgba(0, 180, 255, 0.1);
-            margin-left: auto;
-            border-bottom-right-radius: 4px;
-        }
-        .msg.received {
-            background: rgba(255, 255, 255, 0.04);
-            border-bottom-left-radius: 4px;
-        }
-        .msg .time {
-            font-size: 0.6em;
-            color: rgba(255, 255, 255, 0.15);
-            display: block;
-            text-align: right;
-        }
-        .input-row {
-            display: flex;
-            gap: 8px;
-            margin-top: 8px;
-        }
-        .input-row input {
-            flex: 1;
-            margin: 0;
-        }
-        .input-row button {
-            width: auto;
-            padding: 10px 20px;
-            margin: 0;
-        }
-        .flex {
-            display: flex;
-            gap: 8px;
-            flex-wrap: wrap;
-        }
-        .flex button {
-            flex: 1;
-        }
-    </style>
+    /* ===== ОСНОВНАЯ КАРТОЧКА — КАК ТЕЛЕГРАМ ===== */
+    .messenger {
+      max-width: 480px;
+      width: 100%;
+      background: #1a1a1a;
+      border-radius: 28px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.9), 0 0 0 1px rgba(255, 255, 255, 0.03);
+      padding: 0;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      height: 700px;
+      max-height: 95vh;
+      position: relative;
+    }
+
+    /* ===== ШАПКА ===== */
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 18px 20px 12px 20px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+      flex-shrink: 0;
+      background: #1a1a1a;
+      z-index: 2;
+    }
+
+    .logo {
+      font-family: 'Dela Gothic One', cursive;
+      font-size: 1.6rem;
+      letter-spacing: 2px;
+      color: #e8ffe8;
+      background: rgba(40, 160, 40, 0.06);
+      padding: 0 14px 0 10px;
+      border-radius: 40px;
+      border: 1px solid rgba(80, 220, 80, 0.04);
+      line-height: 1.4;
+      display: inline-block;
+    }
+
+    .status-badge {
+      font-family: 'Dela Gothic One', cursive;
+      font-size: 0.65rem;
+      background: rgba(255, 255, 255, 0.02);
+      color: #6a8f6a;
+      padding: 4px 14px;
+      border-radius: 40px;
+      border: 1px solid rgba(255, 255, 255, 0.03);
+      letter-spacing: 0.5px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 160px;
+    }
+
+    /* ===== БЛОК АВТОРИЗАЦИИ ===== */
+    .auth-area {
+      padding: 14px 20px 12px 20px;
+      background: #141414;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+      flex-shrink: 0;
+    }
+
+    .auth-area .auth-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .auth-area input {
+      flex: 1;
+      min-width: 100px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.04);
+      border-radius: 40px;
+      padding: 10px 16px;
+      font-family: 'Dela Gothic One', cursive;
+      font-size: 0.75rem;
+      color: #d4e8d4;
+      outline: none;
+      transition: 0.2s;
+    }
+    .auth-area input:focus {
+      border-color: rgba(80, 220, 80, 0.08);
+      background: rgba(255, 255, 255, 0.02);
+    }
+    .auth-area input::placeholder {
+      color: rgba(200, 255, 200, 0.08);
+    }
+
+    .auth-btn {
+      background: rgba(40, 160, 40, 0.04);
+      border: 1px solid rgba(80, 220, 80, 0.04);
+      border-radius: 40px;
+      padding: 10px 18px;
+      font-family: 'Dela Gothic One', cursive;
+      font-size: 0.7rem;
+      color: #8ab88a;
+      cursor: pointer;
+      transition: 0.15s;
+      letter-spacing: 0.5px;
+      white-space: nowrap;
+    }
+    .auth-btn:hover {
+      background: rgba(40, 200, 40, 0.04);
+      border-color: rgba(80, 220, 80, 0.06);
+      color: #a8d8a8;
+    }
+    .auth-btn:active {
+      transform: scale(0.95);
+    }
+
+    .auth-status {
+      font-size: 0.6rem;
+      color: rgba(200, 255, 200, 0.15);
+      text-align: center;
+      letter-spacing: 0.5px;
+      padding-top: 8px;
+    }
+    .auth-status.error {
+      color: rgba(255, 150, 150, 0.3);
+    }
+    .auth-status.success {
+      color: rgba(150, 255, 150, 0.2);
+    }
+
+    /* ===== ОКНО СООБЩЕНИЙ ===== */
+    .messages-window {
+      flex: 1;
+      overflow-y: auto;
+      padding: 12px 16px 8px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      scroll-behavior: smooth;
+      background: #141414;
+    }
+
+    .messages-window::-webkit-scrollbar {
+      width: 4px;
+    }
+    .messages-window::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    .messages-window::-webkit-scrollbar-thumb {
+      background: rgba(80, 220, 80, 0.05);
+      border-radius: 20px;
+    }
+
+    /* ===== СООБЩЕНИЯ — КАК В ТЕЛЕГРАМ ===== */
+    .message-item {
+      font-family: 'Dela Gothic One', cursive;
+      background: rgba(255, 255, 255, 0.02);
+      padding: 8px 14px;
+      border-radius: 16px 16px 16px 4px;
+      color: #d4e8d4;
+      border-left: 2px solid rgba(80, 220, 80, 0.06);
+      word-break: break-word;
+      font-size: 0.9rem;
+      line-height: 1.5;
+      letter-spacing: 0.2px;
+      animation: floatIn 0.2s ease-out;
+      max-width: 92%;
+      align-self: flex-start;
+    }
+
+    .message-item strong {
+      color: #8fc98f;
+      font-weight: 400;
+      background: rgba(80, 220, 80, 0.02);
+      padding: 0 10px 0 6px;
+      border-radius: 20px;
+      margin-right: 6px;
+      font-size: 0.75rem;
+      border: 1px solid rgba(80, 220, 80, 0.02);
+    }
+
+    /* Свои сообщения (справа) */
+    .message-item.own {
+      align-self: flex-end;
+      border-left: none;
+      border-right: 2px solid rgba(80, 220, 80, 0.08);
+      border-radius: 16px 16px 4px 16px;
+      background: rgba(40, 160, 40, 0.02);
+    }
+
+    .system-message {
+      font-family: 'Dela Gothic One', cursive;
+      text-align: center;
+      color: rgba(180, 230, 180, 0.08);
+      padding: 6px 12px;
+      font-size: 0.6rem;
+      letter-spacing: 1px;
+      align-self: center;
+      width: 100%;
+    }
+
+    @keyframes floatIn {
+      0% { opacity: 0.2; transform: translateY(6px); }
+      100% { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ===== ПОЛЕ ВВОДА ===== */
+    .input-area {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      padding: 10px 16px 14px 16px;
+      background: #141414;
+      border-top: 1px solid rgba(255, 255, 255, 0.02);
+      flex-shrink: 0;
+    }
+
+    .input-area input {
+      flex: 1;
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid rgba(255, 255, 255, 0.02);
+      border-radius: 40px;
+      padding: 12px 18px;
+      font-family: 'Dela Gothic One', cursive;
+      font-size: 0.9rem;
+      color: #d4e8d4;
+      outline: none;
+      transition: 0.2s;
+    }
+    .input-area input:focus {
+      border-color: rgba(80, 220, 80, 0.04);
+      background: rgba(255, 255, 255, 0.01);
+    }
+    .input-area input::placeholder {
+      color: rgba(200, 255, 200, 0.05);
+      font-size: 0.8rem;
+    }
+    .input-area input:disabled {
+      opacity: 0.3;
+      cursor: not-allowed;
+    }
+
+    .input-area button {
+      background: rgba(40, 160, 40, 0.02);
+      border: 1px solid rgba(80, 220, 80, 0.02);
+      border-radius: 40px;
+      padding: 12px 24px;
+      font-family: 'Dela Gothic One', cursive;
+      font-size: 1rem;
+      color: #8ab88a;
+      cursor: pointer;
+      transition: 0.1s;
+      letter-spacing: 1px;
+      flex-shrink: 0;
+    }
+    .input-area button:hover {
+      background: rgba(40, 200, 40, 0.02);
+      border-color: rgba(80, 220, 80, 0.04);
+      color: #a8d8a8;
+    }
+    .input-area button:active {
+      transform: scale(0.94);
+    }
+    .input-area button:disabled {
+      opacity: 0.2;
+      cursor: not-allowed;
+    }
+
+    @media (max-width: 480px) {
+      .messenger { border-radius: 20px; height: 100vh; max-height: 100vh; padding: 0; }
+      .header { padding: 14px 16px 10px 16px; }
+      .logo { font-size: 1.3rem; }
+      .auth-area { padding: 10px 16px; }
+      .auth-area input { font-size: 0.65rem; padding: 8px 12px; }
+      .auth-btn { font-size: 0.6rem; padding: 8px 12px; }
+      .messages-window { padding: 8px 12px; }
+      .message-item { font-size: 0.8rem; padding: 6px 12px; }
+      .input-area { padding: 8px 12px 12px 12px; }
+      .input-area input { font-size: 0.8rem; padding: 10px 14px; }
+      .input-area button { font-size: 0.8rem; padding: 10px 16px; }
+    }
+  </style>
 </head>
 <body>
-
-    <div class="container">
-
-        <!-- ===== АВТОРИЗАЦИЯ ===== -->
-        <div id="authBlock">
-            <h1>APOAPSIS</h1>
-            <div class="sub">точка на орбите</div>
-            <input type="email" id="emailInput" placeholder="почта" />
-            <input type="password" id="passInput" placeholder="пароль" />
-            <button class="btn-cyan" id="registerBtn">зарегистрироваться</button>
-            <button class="btn-ghost" id="loginBtn">войти</button>
-            <div id="authMsg" class="message"></div>
-        </div>
-
-        <!-- ===== МЕССЕНДЖЕР ===== -->
-        <div id="appBlock" class="hidden">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
-                <div>
-                    <span style="color:#00D4FF;font-weight:700;" id="userDisplay">user</span>
-                    <span style="color:rgba(255,255,255,0.15);font-size:0.7em;">онлайн</span>
-                </div>
-                <button class="btn-danger btn-small" id="logoutBtn">выйти</button>
-            </div>
-
-            <!-- СПИСОК ЧАТОВ -->
-            <div id="chatList"></div>
-
-            <!-- КНОПКА НОВОГО ЧАТА -->
-            <button class="btn-ghost btn-small" id="newChatBtn" style="width:100%;margin:6px 0;">➕ новый чат</button>
-
-            <!-- ОКНО ЧАТА -->
-            <div id="chatWindow" class="hidden">
-                <div style="display:flex;justify-content:space-between;align-items:center;margin:10px 0 6px 0;">
-                    <span style="font-weight:600;" id="chatPartnerName">Чат</span>
-                    <button class="btn-danger btn-small" id="closeChatBtn">✕</button>
-                </div>
-                <div class="chat-messages" id="messagesContainer">
-                    <div style="text-align:center;color:rgba(255,255,255,0.1);padding:20px 0;">нет сообщений</div>
-                </div>
-                <div class="input-row">
-                    <input type="text" id="msgInput" placeholder="сообщение..." />
-                    <button class="btn-cyan" id="sendBtn">отправить</button>
-                </div>
-            </div>
-        </div>
-
+  <div class="messenger">
+    <!-- ШАПКА -->
+    <div class="header">
+      <span class="logo">APOAPSIS</span>
+      <span class="status-badge" id="authBadge">✦ войдите</span>
     </div>
 
-    <script>
-        // ============================================================
-        // 1. КОНФИГ FIREBASE
-        // ============================================================
-        var firebaseConfig = {
-            apiKey: "AIzaSyCUsMTVo7kIgPdafanIhIHSnz8vyApJODo",
-            authDomain: "nebula-93d4f.firebaseapp.com",
-            databaseURL: "https://nebula-93d4f-default-rtdb.europe-west1.firebasedatabase.app",
-            projectId: "nebula-93d4f",
-            storageBucket: "nebula-93d4f.firebasestorage.app",
-            messagingSenderId: "322363940406",
-            appId: "1:322363940406:web:0803c7c10387ebb8fb8297",
-            measurementId: "G-SMGGRTYCV0"
-        };
+    <!-- АВТОРИЗАЦИЯ -->
+    <div class="auth-area" id="authArea">
+      <div class="auth-row">
+        <input type="email" id="authEmail" placeholder="почта" autocomplete="email" />
+        <input type="password" id="authPassword" placeholder="пароль" autocomplete="current-password" />
+      </div>
+      <div class="auth-row" style="justify-content: center; margin-top: 6px;">
+        <button class="auth-btn" id="authLoginBtn">вход</button>
+        <button class="auth-btn" id="authRegisterBtn">регистрация</button>
+        <button class="auth-btn" id="authLogoutBtn" style="display:none;">выход</button>
+      </div>
+      <div class="auth-status" id="authStatus">введите почту и пароль</div>
+    </div>
 
-        firebase.initializeApp(firebaseConfig);
-        var auth = firebase.auth();
-        var db = firebase.firestore();
+    <!-- СООБЩЕНИЯ -->
+    <div id="messageContainer" class="messages-window">
+      <div class="system-message">войдите, чтобы писать</div>
+    </div>
 
-        // ============================================================
-        // 2. ПЕРЕМЕННЫЕ
-        // ============================================================
-        var currentUser = null;
-        var currentUserEmail = null;
-        var currentChatId = null;
-        var currentChatPartner = null;
-        var chatUnsubscribe = null;
-        var allChats = [];
-        var allUsers = {};
+    <!-- ВВОД -->
+    <div class="input-area">
+      <input type="text" id="messageInput" placeholder="сообщение..." autocomplete="off" disabled />
+      <button id="sendButton" disabled>➤</button>
+    </div>
+  </div>
 
-        // ============================================================
-        // 3. ВСПОМОГАТЕЛЬНЫЕ
-        // ============================================================
-        function getChatId(user1, user2) {
-            var arr = [user1, user2];
-            arr.sort();
-            return arr.join('_');
+  <script type="module">
+    // ========== FIREBASE ==========
+    import { initializeApp } from 'firebase/app';
+    import { getDatabase, ref, push, onChildAdded, get, child } from 'firebase/database';
+    import {
+      getAuth,
+      createUserWithEmailAndPassword,
+      signInWithEmailAndPassword,
+      signOut,
+      onAuthStateChanged
+    } from 'firebase/auth';
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyBIgCjEVT5BsPbGZqEARSDGvYv_9LclFY8",
+      authDomain: "apoapsis-a9024.firebaseapp.com",
+      projectId: "apoapsis-a9024",
+      storageBucket: "apoapsis-a9024.firebasestorage.app",
+      messagingSenderId: "264187106751",
+      appId: "1:264187106751:web:712670b22bbaeeb7bcfd0a"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const database = getDatabase(app);
+    const auth = getAuth(app);
+    const messagesRef = ref(database, 'messages');
+
+    // ========== DOM ==========
+    const messageContainer = document.getElementById('messageContainer');
+    const messageInput = document.getElementById('messageInput');
+    const sendButton = document.getElementById('sendButton');
+
+    const authEmail = document.getElementById('authEmail');
+    const authPassword = document.getElementById('authPassword');
+    const authStatus = document.getElementById('authStatus');
+    const authBadge = document.getElementById('authBadge');
+    const authLoginBtn = document.getElementById('authLoginBtn');
+    const authRegisterBtn = document.getElementById('authRegisterBtn');
+    const authLogoutBtn = document.getElementById('authLogoutBtn');
+
+    let currentUser = null;
+
+    // ========== СООБЩЕНИЯ ==========
+    function addMessageToDOM(text, isOwn = false, isSystem = false) {
+      const msgDiv = document.createElement('div');
+      if (isSystem) {
+        msgDiv.className = 'system-message';
+        msgDiv.textContent = text;
+      } else {
+        msgDiv.className = 'message-item' + (isOwn ? ' own' : '');
+        const names = ['🌱 Apo', '💧 Physis', '🌿 Eco', '🍃 Verd', '✨ Moss'];
+        const name = names[Math.floor(Math.random() * names.length)];
+        msgDiv.innerHTML = `<strong>${name}</strong> ${text}`;
+      }
+      messageContainer.appendChild(msgDiv);
+      messageContainer.scrollTop = messageContainer.scrollHeight;
+    }
+
+    // ========== ПРИЁМ СООБЩЕНИЙ ==========
+    onChildAdded(messagesRef, (snapshot) => {
+      const data = snapshot.val();
+      if (data && data.text) {
+        if (data.text.startsWith('🔥')) {
+          addMessageToDOM(data.text, false, true);
+        } else {
+          const isOwn = data.uid === currentUser?.uid;
+          addMessageToDOM(data.text, isOwn, false);
         }
+      }
+    });
 
-        function notify(text) {
-            var el = document.createElement('div');
-            el.style.cssText =
-                'position:fixed;bottom:20px;right:20px;background:rgba(13,13,43,0.95);color:#E0F4FF;padding:10px 18px;border-radius:14px;border:1px solid rgba(0,180,255,0.05);box-shadow:0 10px 30px rgba(0,0,0,0.5);z-index:999;animation:slideIn 0.3s ease;max-width:280px;font-family:Arial;font-size:0.85em;';
-            el.textContent = text;
-            document.body.appendChild(el);
-            setTimeout(function() { el.remove(); }, 3500);
-        }
+    // ========== ОТПРАВКА ==========
+    function sendMessage() {
+      if (!currentUser) {
+        authStatus.textContent = '⚠️ войдите, чтобы писать';
+        authStatus.className = 'auth-status error';
+        return;
+      }
+      const rawText = messageInput.value.trim();
+      if (rawText === '') return;
 
-        // ============================================================
-        // 4. АВТОРИЗАЦИЯ
-        // ============================================================
-        function showApp() {
-            document.getElementById('authBlock').classList.add('hidden');
-            document.getElementById('appBlock').classList.remove('hidden');
-            document.getElementById('userDisplay').innerText = currentUserEmail;
-            loadChats();
-        }
-
-        function registerUser() {
-            var email = document.getElementById('emailInput').value.trim();
-            var pass = document.getElementById('passInput').value.trim();
-            var msg = document.getElementById('authMsg');
-
-            if (!email || !pass) {
-                msg.innerText = '❌ заполни все поля';
-                msg.className = 'message error';
-                return;
-            }
-            if (pass.length < 6) {
-                msg.innerText = '❌ пароль минимум 6 символов';
-                msg.className = 'message error';
-                return;
-            }
-
-            auth.createUserWithEmailAndPassword(email, pass)
-                .then(function(userCredential) {
-                    var user = userCredential.user;
-                    return db.collection('users').doc(user.uid).set({
-                        email: email,
-                        createdAt: new Date().toISOString()
-                    });
-                })
-                .then(function() {
-                    msg.innerText = '✅ регистрация успешна! войди.';
-                    msg.className = 'message success';
-                })
-                .catch(function(error) {
-                    msg.innerText = '❌ ' + error.message;
-                    msg.className = 'message error';
-                });
-        }
-
-        function loginUser() {
-            var email = document.getElementById('emailInput').value.trim();
-            var pass = document.getElementById('passInput').value.trim();
-            var msg = document.getElementById('authMsg');
-
-            if (!email || !pass) {
-                msg.innerText = '❌ заполни все поля';
-                msg.className = 'message error';
-                return;
-            }
-
-            auth.signInWithEmailAndPassword(email, pass)
-                .then(function(userCredential) {
-                    currentUser = userCredential.user.uid;
-                    currentUserEmail = userCredential.user.email;
-                    msg.innerText = '';
-                    showApp();
-                    notify('👋 добро пожаловать');
-                })
-                .catch(function(error) {
-                    msg.innerText = '❌ ' + error.message;
-                    msg.className = 'message error';
-                });
-        }
-
-        function logoutUser() {
-            if (chatUnsubscribe) { chatUnsubscribe();
-                chatUnsubscribe = null; }
-            auth.signOut();
-            currentUser = null;
-            currentUserEmail = null;
-            currentChatId = null;
-            currentChatPartner = null;
-            document.getElementById('authBlock').classList.remove('hidden');
-            document.getElementById('appBlock').classList.add('hidden');
-            document.getElementById('chatWindow').classList.add('hidden');
-            document.getElementById('chatList').innerHTML = '';
-        }
-
-        // ============================================================
-        // 5. ЧАТЫ
-        // ============================================================
-        function loadChats() {
-            if (!currentUser) return;
-
-            db.collection('users').get()
-                .then(function(snapshot) {
-                    allUsers = {};
-                    snapshot.forEach(function(doc) {
-                        allUsers[doc.id] = doc.data();
-                    });
-                    return db.collection('chats')
-                        .where('participants', 'array-contains', currentUser)
-                        .get();
-                })
-                .then(function(snapshot) {
-                    allChats = [];
-                    snapshot.forEach(function(doc) {
-                        var data = doc.data();
-                        data.id = doc.id;
-                        allChats.push(data);
-                    });
-                    allChats.sort(function(a, b) {
-                        var aTime = a.lastMessageTime || a.createdAt || 0;
-                        var bTime = b.lastMessageTime || b.createdAt || 0;
-                        if (aTime < bTime) return 1;
-                        if (aTime > bTime) return -1;
-                        return 0;
-                    });
-                    renderChats();
-                })
-                .catch(function(error) {
-                    console.error(error);
-                });
-        }
-
-        function renderChats() {
-            var container = document.getElementById('chatList');
-            if (allChats.length === 0) {
-                container.innerHTML = '<div style="color:rgba(255,255,255,0.1);text-align:center;padding:16px 0;">нет чатов</div>';
-                return;
-            }
-
-            var html = '';
-            for (var i = 0; i < allChats.length; i++) {
-                var chat = allChats[i];
-                var partnerId = chat.participants.find(function(p) { return p !== currentUser; });
-                var partnerData = allUsers[partnerId] || {};
-                var partnerEmail = partnerData.email || partnerId || 'unknown';
-                var isActive = chat.id === currentChatId;
-                var lastMsg = chat.lastMessage || 'нет сообщений';
-
-                html += '<div class="chat-item ' + (isActive ? 'active' : '') + '" onclick="openChat(\'' + chat.id +
-                    '\', \'' + partnerId + '\')">' +
-                    '<div><div class="name">' + partnerEmail + '</div>' +
-                    '<div class="last">' + lastMsg + '</div></div>' +
-                    '</div>';
-            }
-            container.innerHTML = html;
-        }
-
-        // ============================================================
-        // 6. ОТКРЫТЬ ЧАТ
-        // ============================================================
-        function openChat(chatId, partnerId) {
-            if (chatUnsubscribe) { chatUnsubscribe(); }
-
-            currentChatId = chatId;
-            currentChatPartner = partnerId;
-
-            var partnerData = allUsers[partnerId] || {};
-            var partnerEmail = partnerData.email || partnerId || 'Неизвестный';
-
-            document.getElementById('chatPartnerName').innerText = partnerEmail;
-            document.getElementById('chatWindow').classList.remove('hidden');
-
-            renderChats();
-            loadMessages(chatId);
-        }
-
-        function closeChat() {
-            if (chatUnsubscribe) { chatUnsubscribe();
-                chatUnsubscribe = null; }
-            currentChatId = null;
-            currentChatPartner = null;
-            document.getElementById('chatWindow').classList.add('hidden');
-            renderChats();
-        }
-
-        // ============================================================
-        // 7. СООБЩЕНИЯ
-        // ============================================================
-        function loadMessages(chatId) {
-            if (chatUnsubscribe) { chatUnsubscribe(); }
-
-            chatUnsubscribe = db.collection('chats').doc(chatId)
-                .onSnapshot(function(doc) {
-                    if (doc.exists) {
-                        var data = doc.data();
-                        var messages = data.messages || [];
-                        renderMessages(messages);
-                    }
-                }, function(error) {
-                    console.error(error);
-                });
-        }
-
-        function renderMessages(messages) {
-            var container = document.getElementById('messagesContainer');
-
-            if (!messages || messages.length === 0) {
-                container.innerHTML = '<div style="text-align:center;color:rgba(255,255,255,0.1);padding:20px 0;">нет сообщений</div>';
-                return;
-            }
-
-            var html = '';
-            for (var i = 0; i < messages.length; i++) {
-                var msg = messages[i];
-                var isMe = msg.sender === currentUser;
-                var time = msg.time ? new Date(msg.time).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' }) :
-                '';
-                html += '<div class="msg ' + (isMe ? 'sent' : 'received') + '">' +
-                    msg.text +
-                    '<span class="time">' + time + '</span>' +
-                    '</div>';
-            }
-            container.innerHTML = html;
-            container.scrollTop = container.scrollHeight;
-        }
-
-        function sendMessage() {
-            var input = document.getElementById('msgInput');
-            var text = input.value.trim();
-            if (!text || !currentChatId) return;
-
-            var chatRef = db.collection('chats').doc(currentChatId);
-
-            chatRef.get()
-                .then(function(doc) {
-                    var data = doc.data() || { messages: [] };
-                    var messages = data.messages || [];
-                    messages.push({
-                        sender: currentUser,
-                        text: text,
-                        time: new Date().toISOString()
-                    });
-
-                    return chatRef.update({
-                        messages: messages,
-                        lastMessage: text,
-                        lastMessageTime: new Date().toISOString()
-                    });
-                })
-                .then(function() {
-                    input.value = '';
-                    notify('💬 отправлено');
-                    loadChats();
-                })
-                .catch(function(error) {
-                    notify('❌ ошибка');
-                    console.error(error);
-                });
-        }
-
-        // ============================================================
-        // 8. НОВЫЙ ЧАТ
-        // ============================================================
-        function createNewChat() {
-            var partnerEmail = prompt('Введите email пользователя:');
-            if (!partnerEmail) return;
-
-            db.collection('users').where('email', '==', partnerEmail).get()
-                .then(function(snapshot) {
-                    if (snapshot.empty) {
-                        notify('❌ пользователь не найден');
-                        return;
-                    }
-                    var userDoc = snapshot.docs[0];
-                    var partnerId = userDoc.id;
-
-                    if (partnerId === currentUser) {
-                        notify('❌ нельзя с собой');
-                        return;
-                    }
-
-                    var chatId = getChatId(currentUser, partnerId);
-
-                    return db.collection('chats').doc(chatId).get()
-                        .then(function(doc) {
-                            if (doc.exists) {
-                                notify('✅ чат уже существует');
-                                openChat(chatId, partnerId);
-                                return;
-                            }
-                            return db.collection('chats').doc(chatId).set({
-                                participants: [currentUser, partnerId],
-                                createdAt: new Date().toISOString(),
-                                messages: [],
-                                lastMessage: '',
-                                lastMessageTime: null
-                            });
-                        });
-                })
-                .then(function() {
-                    if (currentChatId) {
-                        notify('✅ чат создан');
-                        loadChats();
-                    }
-                })
-                .catch(function(error) {
-                    notify('❌ ошибка: ' + error.message);
-                    console.error(error);
-                });
-        }
-
-        // ============================================================
-        // 9. КНОПКИ
-        // ============================================================
-        document.getElementById('registerBtn').addEventListener('click', registerUser);
-        document.getElementById('loginBtn').addEventListener('click', loginUser);
-        document.getElementById('logoutBtn').addEventListener('click', logoutUser);
-        document.getElementById('sendBtn').addEventListener('click', sendMessage);
-        document.getElementById('newChatBtn').addEventListener('click', createNewChat);
-        document.getElementById('closeChatBtn').addEventListener('click', closeChat);
-
-        document.getElementById('msgInput').addEventListener('keydown', function(e) {
-            if (e.key === 'Enter') sendMessage();
+      push(messagesRef, { text: rawText, uid: currentUser.uid })
+        .then(() => {
+          messageInput.value = '';
+          messageInput.focus();
+        })
+        .catch((error) => {
+          console.error(error);
+          addMessageToDOM('⚠️ ошибка', false, true);
         });
+    }
 
-        // ============================================================
-        // 10. АВТО-ВХОД
-        // ============================================================
-        auth.onAuthStateChanged(function(user) {
-            if (user) {
-                currentUser = user.uid;
-                currentUserEmail = user.email;
-                showApp();
-            }
+    sendButton.addEventListener('click', sendMessage);
+    messageInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        sendMessage();
+      }
+    });
+
+    // ========== АВТОРИЗАЦИЯ ==========
+    function setAuthUI(user) {
+      if (user) {
+        currentUser = user;
+        authBadge.textContent = `✦ ${user.email}`;
+        authBadge.style.color = '#8fc98f';
+        messageInput.disabled = false;
+        sendButton.disabled = false;
+        authLoginBtn.style.display = 'none';
+        authRegisterBtn.style.display = 'none';
+        authLogoutBtn.style.display = 'inline-block';
+        authStatus.textContent = '✅ в сети';
+        authStatus.className = 'auth-status success';
+        // Удаляем системное сообщение
+        const first = messageContainer.firstChild;
+        if (first && first.classList && first.classList.contains('system-message') && first.textContent.includes('войдите')) {
+          first.remove();
+        }
+        // Приветствие
+        if (!localStorage.getItem('apo_welcome_' + user.uid)) {
+          push(messagesRef, { text: '🔥 ' + user.email + ' присоединился', uid: 'system' })
+            .then(() => localStorage.setItem('apo_welcome_' + user.uid, 'true'))
+            .catch(() => {});
+        }
+      } else {
+        currentUser = null;
+        authBadge.textContent = '✦ войдите';
+        authBadge.style.color = '#6a8f6a';
+        messageInput.disabled = true;
+        sendButton.disabled = true;
+        authLoginBtn.style.display = 'inline-block';
+        authRegisterBtn.style.display = 'inline-block';
+        authLogoutBtn.style.display = 'none';
+        authStatus.textContent = 'введите почту и пароль';
+        authStatus.className = 'auth-status';
+        messageContainer.innerHTML = '<div class="system-message">войдите, чтобы писать</div>';
+      }
+    }
+
+    authRegisterBtn.addEventListener('click', () => {
+      const email = authEmail.value.trim();
+      const password = authPassword.value.trim();
+      if (!email || !password) {
+        authStatus.textContent = '⚠️ заполните поля';
+        authStatus.className = 'auth-status error';
+        return;
+      }
+      if (password.length < 6) {
+        authStatus.textContent = '⚠️ пароль >= 6 символов';
+        authStatus.className = 'auth-status error';
+        return;
+      }
+      createUserWithEmailAndPassword(auth, email, password)
+        .then((cred) => {
+          authStatus.textContent = '✅ регистрация успешна';
+          authStatus.className = 'auth-status success';
+          setAuthUI(cred.user);
+        })
+        .catch((error) => {
+          authStatus.textContent = '⚠️ ' + error.message;
+          authStatus.className = 'auth-status error';
         });
-    </script>
+    });
 
+    authLoginBtn.addEventListener('click', () => {
+      const email = authEmail.value.trim();
+      const password = authPassword.value.trim();
+      if (!email || !password) {
+        authStatus.textContent = '⚠️ заполните поля';
+        authStatus.className = 'auth-status error';
+        return;
+      }
+      signInWithEmailAndPassword(auth, email, password)
+        .then((cred) => {
+          authStatus.textContent = '✅ вход выполнен';
+          authStatus.className = 'auth-status success';
+          setAuthUI(cred.user);
+        })
+        .catch((error) => {
+          authStatus.textContent = '⚠️ ' + error.message;
+          authStatus.className = 'auth-status error';
+        });
+    });
+
+    authLogoutBtn.addEventListener('click', () => {
+      signOut(auth).then(() => {
+        authStatus.textContent = '👋 вы вышли';
+        authStatus.className = 'auth-status';
+        setAuthUI(null);
+      });
+    });
+
+    onAuthStateChanged(auth, (user) => {
+      setAuthUI(user);
+    });
+
+    console.log('🌿 APOAPSIS · Telegram style');
+  </script>
 </body>
 </html>
